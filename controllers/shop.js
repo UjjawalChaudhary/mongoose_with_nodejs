@@ -80,9 +80,22 @@ exports.postCartDeleteProduct = (req, res, next) => {
 };
 
 exports.postOrder = (req, res, next) => {
-  let fetchedCart;
-  req.user
-    .addOrder()
+req.user
+.populate('cart.items.productId')
+.execPopulate()
+.then(user => {
+  const products = user.cart.items.map(i => {
+    return {quantity: i.quantity, product: i.productId};
+  });
+  const order = new order({
+    user: {
+      name: req.user.name,
+      userId: req.user
+    },
+    products: products
+  });
+  return order.save();
+})
     .then(result => {
       res.redirect('/orders');
     })
